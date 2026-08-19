@@ -1,13 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState } from "react";
-import { events } from "@/lib/events";
+import { use, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 type EventDetailsPageProps = {
   params: Promise<{
     id: string;
   }>;
+};
+
+type Event = {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  type: string;
 };
 
 export default function EventDetailsPage({
@@ -16,27 +25,77 @@ export default function EventDetailsPage({
 
   const { id } = use(params);
 
-  const event = events.find(
-    (event) => event.id === Number(id)
-  );
-
+  const [event, setEvent] = useState<Event | null>(null);
   const [attending, setAttending] = useState(false);
+  const [attendeeCount, setAttendeeCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const [attendeeCount, setAttendeeCount] = useState(
-    event?.attendees ?? 0
-  );
+
+  useEffect(() => {
+
+    async function fetchEvent() {
+
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+      
+        .eq("id", id)
+        .single();
+
+
+      if (error) {
+        console.log(error);
+        setLoading(false);
+        return;
+      }
+
+
+      setEvent(data);
+      setAttendeeCount(data.attendees ?? 0);
+      setLoading(false);
+
+    }
+
+
+    fetchEvent();
+
+  }, [id]);
+
+
+
+  function handleAttend() {
+
+    if (!attending) {
+      setAttendeeCount(attendeeCount + 1);
+      setAttending(true);
+    }
+
+  }
+
+
+
+  if (loading) {
+    return (
+      <main className="min-h-screen p-8">
+        <h1 className="text-3xl font-bold">
+          Loading event...
+        </h1>
+      </main>
+    );
+  }
+
 
 
   if (!event) {
     return (
-      <main className="min-h-screen p-8 bg-gradient-to-br from-blue-200 via-purple-200 to-pink-100">
+      <main className="min-h-screen p-8">
 
         <h1 className="text-3xl font-bold">
           Event not found
         </h1>
 
         <Link href="/events">
-          <button className="mt-6 px-5 py-2 rounded-lg bg-black text-white">
+          <button className="mt-6 rounded-lg bg-black px-5 py-2 text-white">
             ← Back to Events
           </button>
         </Link>
@@ -46,46 +105,23 @@ export default function EventDetailsPage({
   }
 
 
-  function handleAttend() {
-    if (!attending) {
-      setAttendeeCount(attendeeCount + 1);
-      setAttending(true);
-    }
-  }
-
 
   return (
-    <main className="min-h-screen p-8 bg-gradient-to-br from-blue-200 via-purple-200 to-pink-100">
+    <main className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-100 p-8">
 
 
       <Link href="/events">
-        <button
-          className="
-          mb-6
-          px-5
-          py-2
-          rounded-lg
-          bg-black
-          text-white
-          hover:bg-gray-800
-          transition
-          "
-        >
+
+        <button className="mb-6 rounded-lg bg-black px-5 py-2 text-white">
           ← Back to Events
         </button>
+
       </Link>
 
 
 
-      <div
-        className="
-        bg-white
-        rounded-2xl
-        p-8
-        shadow-md
-        max-w-3xl
-        "
-      >
+      <div className="max-w-3xl rounded-2xl bg-white p-8 shadow-md">
+
 
         <h1 className="text-4xl font-bold text-gray-900">
           {event.title}
@@ -113,34 +149,15 @@ export default function EventDetailsPage({
 
 
 
-        <span
-          className="
-          inline-block
-          mt-5
-          px-4
-          py-2
-          rounded-full
-          bg-blue-100
-          text-blue-700
-          "
-        >
-          {event.category}
+        <span className="mt-5 inline-block rounded-full bg-blue-100 px-4 py-2 text-blue-700">
+          {event.type}
         </span>
 
 
 
         <button
           onClick={handleAttend}
-          className="
-          mt-8
-          px-6
-          py-3
-          rounded-xl
-          bg-black
-          text-white
-          hover:bg-gray-800
-          transition
-          "
+          className="mt-8 rounded-xl bg-black px-6 py-3 text-white transition hover:bg-gray-800"
         >
           {attending ? "You're Attending ✓" : "I'm Attending"}
         </button>
