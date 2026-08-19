@@ -19,7 +19,7 @@ export default function EventsSection() {
           {events.map((event) => (
             <EventCard
               key={event.id}
-              id={event.id}
+              id={event.id.toString()}
               title={event.title}
               date={event.date}
               location={event.location}

@@ -139,7 +139,6 @@ export default function AdminPage() {
     fetchPendingEvents();
   }
 
-  // Show loading while checking admin access
   if (checkingAccess) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-100 flex items-center justify-center">
